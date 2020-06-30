@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Github Contributions Wallpaper</string>
+    <string name="github_username">github username</string>
+    <string name="not_found">not found</string>
+    <string name="empty"></string>
+    <string name="enable">Enable</string>
 </resources>
