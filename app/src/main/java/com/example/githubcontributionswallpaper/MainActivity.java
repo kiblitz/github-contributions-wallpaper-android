@@ -27,6 +27,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int DAYS_IN_WEEK = 7;
     private static final int WEEKS_TO_SHOW = 8;
 
-    private String[][] contribution_depths = new String[DAYS_IN_WEEK][WEEKS_TO_SHOW];
+    private String[][] contribution_depths = new String[WEEKS_TO_SHOW][DAYS_IN_WEEK];
 
     enum GithubColors {
         ONE("#ebedf0"),
@@ -109,11 +110,12 @@ public class MainActivity extends AppCompatActivity {
                     Elements points = document.select("rect[x~=-3(1|2|3|4|5|6|7|8)]");
                     int i = 0;
                     for (Element point : points) {
-                        contribution_depths[i / 8][i % 8] = point.attr("fill");
+                        contribution_depths[i / 7][i % 7] = point.attr("fill");
+                        Log.d("point", String.valueOf(i) + point.attr("x") + ", " + point.attr("y") + ": " + point.attr("fill"));
                         i++;
                     }
+                    Log.d("Deep", "" + Arrays.deepToString(contribution_depths));
                     generateGraph();
-                    // TODO FIX ERROR
                 } catch (Exception e) {
                     Log.d("ERROR", e.toString());
                 }
@@ -130,13 +132,15 @@ public class MainActivity extends AppCompatActivity {
 
         for (int r = 0; r < contribution_depths.length; r++) {
             for (int c = 0; c < contribution_depths[r].length; c++) {
-                String hex = contribution_depths[r][c];
-                ColorFilter filter = new PorterDuffColorFilter(Color.parseColor(contribution_depths[r][c]), PorterDuff.Mode.MULTIPLY);
-                paint.setColorFilter(filter);
-                canvas.drawBitmap(rect, null, new Rect(c * RECT_DIM,
-                        r * RECT_DIM,
-                        (c + 1) * RECT_DIM,
-                        (r + 1) * RECT_DIM), paint);
+                if (contribution_depths[r][c] != null) {
+                    String hex = contribution_depths[r][c];
+                    ColorFilter filter = new PorterDuffColorFilter(Color.parseColor(contribution_depths[r][c]), PorterDuff.Mode.MULTIPLY);
+                    paint.setColorFilter(filter);
+                    canvas.drawBitmap(rect, null, new Rect(r * RECT_DIM,
+                            c * RECT_DIM,
+                            (r + 1) * RECT_DIM,
+                            (c + 1) * RECT_DIM), paint);
+                }
             }
         }
         github_graph.setImageBitmap(result);
