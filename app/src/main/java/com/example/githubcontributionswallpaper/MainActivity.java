@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView github_status;
     private ImageView github_graph;
     private Switch github_wallpaper_switch;
+    private Bitmap display;
 
     private static final int RECT_DIM = 14;
 
@@ -101,12 +102,22 @@ public class MainActivity extends AppCompatActivity {
                     for (Element point : points) {
                         contribution_depths[i / 7][i % 7] = point.attr("fill");
                         i++;
+                        // TODO SHORT GRAPH
                     }
                     generateGraph();
-                    github_status.setText(getResources().getString(R.string.empty));
-                } catch (HttpStatusException e) {
-                    github_status.setText("");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            github_status.setText(getResources().getString(R.string.empty));
+                        }
+                    });
                 } catch (Exception e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            github_status.setText(getResources().getString(R.string.not_found));
+                        }
+                    });
                     Log.d("ERROR", e.toString());
                 }
             }
@@ -115,9 +126,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void generateGraph() {
         Bitmap rect = BitmapFactory.decodeResource(getResources(), R.drawable.github_empty_contribution);
-        Bitmap result = Bitmap.createBitmap(WEEKS_TO_SHOW * RECT_DIM,
+        display = Bitmap.createBitmap(WEEKS_TO_SHOW * RECT_DIM,
                 DAYS_IN_WEEK * RECT_DIM, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(result);
+        Canvas canvas = new Canvas(display);
         Paint paint = new Paint();
 
         for (int r = 0; r < contribution_depths.length; r++) {
@@ -133,6 +144,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        github_graph.setImageBitmap(result);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                github_graph.setImageBitmap(display);
+            }
+        });
     }
 }
