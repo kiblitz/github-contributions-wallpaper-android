@@ -21,10 +21,26 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
-    EditText github_username;
-    TextView github_status;
-    ImageView github_graph;
-    Switch github_wallpaper_switch;
+    private EditText github_username;
+    private TextView github_status;
+    private ImageView github_graph;
+    private Switch github_wallpaper_switch;
+
+    private String[][] contribution_depths = new String[7][8];
+
+    enum GithubColors {
+        ONE("#ebedf0"),
+        TWO("#9be9a8"),
+        THREE("#40c463"),
+        FOUR("#30a14e"),
+        FIVE("#216e39");
+
+        String colorHex_;
+
+        GithubColors(String colorHex) {
+            this.colorHex_ = colorHex;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,13 +92,12 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     Document document = Jsoup.connect("https://github.com/thisistrivial").get();
-                    Log.d("who", "who");
                     Elements points = document.select("rect[x~=-3(1|2|3|4|5|6|7|8)]");
+                    int i = 0;
                     for (Element point : points) {
-                        Log.d("points", point.toString());
-                        Log.d("points", point.attr("x"));
+                        contribution_depths[i / 8][i % 8] = point.attr("fill");
+                        i++;
                     }
-                    Log.d("ELEMENTS", String.valueOf(points.size()));
                 } catch (Exception e) {
                     Log.d("ERROR", e.toString());
                 }
