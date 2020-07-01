@@ -15,12 +15,15 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -32,6 +35,7 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
 
     private EditText github_username;
+    private Button github_search;
     private TextView github_status;
     private ImageView github_graph;
     private Switch github_wallpaper_switch;
@@ -62,36 +66,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         github_username = (EditText) findViewById(R.id.github_username);
+        github_search = (Button) findViewById(R.id.github_search);
         github_status = (TextView) findViewById(R.id.github_status);
         github_graph = (ImageView) findViewById(R.id.github_graph);
         github_wallpaper_switch = (Switch) findViewById(R.id.github_wallpaper_switch);
 
-        github_username.addTextChangedListener(new TextWatcher() {
-
+        github_search.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void afterTextChanged(Editable s) {}
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start,
-                                          int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start,
-                                      int before, int count) {
-                if(s.length() == 0) {
-                    return;
-                }
-                String input = s.toString();
-                // TODO Jsoup
-                // TODO set status
-                // TODO set graph
+            public void onClick(View v) {
+                getGraph();
             }
         });
 
         github_wallpaper_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                getGraph();
                 if (isChecked) {
                     // TODO set wallpaper
                 } else {
@@ -106,16 +95,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    Document document = Jsoup.connect("https://github.com/thisistrivial").get();
+                    Document document = Jsoup.connect("https://github.com/" + github_username.getText().toString()).get();
                     Elements points = document.select("rect[x~=-3(1|2|3|4|5|6|7|8)]");
                     int i = 0;
                     for (Element point : points) {
                         contribution_depths[i / 7][i % 7] = point.attr("fill");
-                        Log.d("point", String.valueOf(i) + point.attr("x") + ", " + point.attr("y") + ": " + point.attr("fill"));
                         i++;
                     }
-                    Log.d("Deep", "" + Arrays.deepToString(contribution_depths));
                     generateGraph();
+                    github_status.setText(getResources().getString(R.string.empty));
+                } catch (HttpStatusException e) {
+                    github_status.setText("");
                 } catch (Exception e) {
                     Log.d("ERROR", e.toString());
                 }
