@@ -2,6 +2,8 @@ package com.example.githubcontributionswallpaper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.WallpaperManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -39,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView github_status;
     private ImageView github_graph;
     private Switch github_wallpaper_switch;
+
     private Bitmap display;
+    private Bitmap wallpaper;
 
     private static final int RECT_DIM = 14;
 
@@ -97,12 +101,17 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     Document document = Jsoup.connect("https://github.com/" + github_username.getText().toString()).get();
-                    Elements points = document.select("rect[x~=-3(1|2|3|4|5|6|7|8)]");
-                    int i = 0;
-                    for (Element point : points) {
-                        contribution_depths[i / 7][i % 7] = point.attr("fill");
-                        i++;
-                        // TODO SHORT GRAPH
+                    Elements points = document.select("rect[x]");
+                    int lastX = Integer.parseInt(points.last().attr("x"));
+                    int firstX = lastX + WEEKS_TO_SHOW;
+                    int cnt = 0;
+                    for (int i = points.size() - DAYS_IN_WEEK * WEEKS_TO_SHOW; i < points.size(); i++) {
+                        Element pointOn = points.get(i);
+                        int xOn = Integer.parseInt(pointOn.attr("x"));
+                        if (xOn < firstX) {
+                            contribution_depths[cnt / 7][cnt % 7] = pointOn.attr("fill");
+                            cnt++;
+                        }
                     }
                     generateGraph();
                     runOnUiThread(new Runnable() {
@@ -150,5 +159,15 @@ public class MainActivity extends AppCompatActivity {
                 github_graph.setImageBitmap(display);
             }
         });
+    }
+
+    private void setWallpaper() {
+        final WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
+        wallpaper = Bitmap.createBitmap(
+                Resources.getSystem().getDisplayMetrics().widthPixels,
+                Resources.getSystem().getDisplayMetrics().heightPixels,
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(wallpaper);
+        //final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
     }
 }
