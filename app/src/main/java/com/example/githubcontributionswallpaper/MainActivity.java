@@ -5,11 +5,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,16 +51,16 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 String input = s.toString();
-                // TODO JSoup
+                // TODO Jsoup
                 // TODO set status
                 // TODO set graph
             }
         });
 
         github_wallpaper_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                getGraph();
                 if (isChecked) {
                     // TODO set wallpaper
                 } else {
@@ -60,5 +68,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void getGraph() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Document document = Jsoup.connect("https://github.com/thisistrivial").get();
+                    Log.d("who", "who");
+                    Elements points = document.select("rect[x~=-3(1|2|3|4|5|6|7|8)]");
+                    for (Element point : points) {
+                        Log.d("points", point.toString());
+                        Log.d("points", point.attr("x"));
+                    }
+                    Log.d("ELEMENTS", String.valueOf(points.size()));
+                } catch (Exception e) {
+                    Log.d("ERROR", e.toString());
+                }
+            }
+        }.start();
     }
 }
