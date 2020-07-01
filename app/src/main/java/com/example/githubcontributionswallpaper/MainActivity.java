@@ -1,8 +1,12 @@
 package com.example.githubcontributionswallpaper;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.WallpaperManager;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,7 +17,9 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -50,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int DAYS_IN_WEEK = 7;
     private static final int WEEKS_TO_SHOW = 8;
 
-    private String[][] contribution_depths = new String[WEEKS_TO_SHOW][DAYS_IN_WEEK];
+    private String[][] contribution_depths;
 
     enum GithubColors {
         ONE("#ebedf0"),
@@ -76,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
         github_graph = (ImageView) findViewById(R.id.github_graph);
         github_wallpaper_switch = (Switch) findViewById(R.id.github_wallpaper_switch);
 
+        requestPermissions();
+
         github_search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -87,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    // TODO set wallpaper
+                   setWallpaper();
                 } else {
                     // TODO remove wallpaper
                 }
@@ -105,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                     int lastX = Integer.parseInt(points.last().attr("x"));
                     int firstX = lastX + WEEKS_TO_SHOW;
                     int cnt = 0;
+                    contribution_depths = new String[WEEKS_TO_SHOW][DAYS_IN_WEEK];
                     for (int i = points.size() - DAYS_IN_WEEK * WEEKS_TO_SHOW; i < points.size(); i++) {
                         Element pointOn = points.get(i);
                         int xOn = Integer.parseInt(pointOn.attr("x"));
@@ -161,13 +170,57 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void requestPermissions() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            System.exit(1);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
     private void setWallpaper() {
+        Bitmap currentWallpaper;
         final WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-        wallpaper = Bitmap.createBitmap(
-                Resources.getSystem().getDisplayMetrics().widthPixels,
-                Resources.getSystem().getDisplayMetrics().heightPixels,
-                Bitmap.Config.ARGB_8888);
+        ParcelFileDescriptor pfd = wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_LOCK);
+        if (pfd == null) {
+            Log.d("ERROR", "1");
+            pfd = wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+        }
+        if (pfd != null) {
+            currentWallpaper = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
+            try
+            {
+                pfd.close();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        } else {
+            final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
+            currentWallpaper = Bitmap.createBitmap(wallpaperDrawable.getIntrinsicWidth(),
+                    wallpaperDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(currentWallpaper);
+            wallpaperDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            wallpaperDrawable.draw(canvas);
+        }
+        int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int graph_l = screenWidth / 5;
+        int graph_t = screenHeight / 2;
+        int graph_r = screenWidth * 4 / 5;
+        int graph_b = screenHeight / 2 + screenWidth * 3 / 5;
+
+        wallpaper = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(wallpaper);
-        //final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
+        canvas.drawBitmap(currentWallpaper, null,
+                new Rect(0, 0, screenWidth, screenHeight), null);
+        if (display != null) {
+            canvas.drawBitmap(display, null,
+                    new Rect(graph_l, graph_t, graph_r, graph_b), null);
+        }
+        github_graph.setImageBitmap(wallpaper);
     }
 }
