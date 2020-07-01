@@ -2,6 +2,15 @@ package com.example.githubcontributionswallpaper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -26,7 +35,12 @@ public class MainActivity extends AppCompatActivity {
     private ImageView github_graph;
     private Switch github_wallpaper_switch;
 
-    private String[][] contribution_depths = new String[7][8];
+    private static final int RECT_DIM = 14;
+
+    private static final int DAYS_IN_WEEK = 7;
+    private static final int WEEKS_TO_SHOW = 8;
+
+    private String[][] contribution_depths = new String[DAYS_IN_WEEK][WEEKS_TO_SHOW];
 
     enum GithubColors {
         ONE("#ebedf0"),
@@ -98,10 +112,33 @@ public class MainActivity extends AppCompatActivity {
                         contribution_depths[i / 8][i % 8] = point.attr("fill");
                         i++;
                     }
+                    generateGraph();
+                    // TODO FIX ERROR
                 } catch (Exception e) {
                     Log.d("ERROR", e.toString());
                 }
             }
         }.start();
+    }
+
+    private void generateGraph() {
+        Bitmap rect = BitmapFactory.decodeResource(getResources(), R.drawable.github_empty_contribution);
+        Bitmap result = Bitmap.createBitmap(WEEKS_TO_SHOW * RECT_DIM,
+                DAYS_IN_WEEK * RECT_DIM, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(result);
+        Paint paint = new Paint();
+
+        for (int r = 0; r < contribution_depths.length; r++) {
+            for (int c = 0; c < contribution_depths[r].length; c++) {
+                String hex = contribution_depths[r][c];
+                ColorFilter filter = new PorterDuffColorFilter(Color.parseColor(contribution_depths[r][c]), PorterDuff.Mode.MULTIPLY);
+                paint.setColorFilter(filter);
+                canvas.drawBitmap(rect, null, new Rect(c * RECT_DIM,
+                        r * RECT_DIM,
+                        (c + 1) * RECT_DIM,
+                        (r + 1) * RECT_DIM), paint);
+            }
+        }
+        github_graph.setImageBitmap(result);
     }
 }
