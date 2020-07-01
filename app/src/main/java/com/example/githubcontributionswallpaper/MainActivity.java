@@ -14,6 +14,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
@@ -23,7 +24,9 @@ import android.os.ParcelFileDescriptor;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -37,6 +40,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -95,7 +100,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                   setWallpaper();
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            setWallpaper();
+                        }
+                    }.start();
                 } else {
                     // TODO remove wallpaper
                 }
@@ -171,8 +181,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestPermissions() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.INTERNET}, 1);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.SET_WALLPAPER}, 1);
+        }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            System.exit(1);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER) != PackageManager.PERMISSION_GRANTED) {
+            System.exit(1);
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             System.exit(1);
@@ -206,8 +228,15 @@ public class MainActivity extends AppCompatActivity {
             wallpaperDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
             wallpaperDrawable.draw(canvas);
         }
-        int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+        WindowManager windowManager =
+                (WindowManager) this.getSystemService(this.WINDOW_SERVICE);
+        Display defaultDisplay = windowManager.getDefaultDisplay();
+        Point screenResolution = new Point();
+        defaultDisplay.getRealSize(screenResolution);
+
+        int screenWidth = screenResolution.x;
+        int screenHeight = screenResolution.y;
         int graph_l = screenWidth / 5;
         int graph_t = screenHeight / 2;
         int graph_r = screenWidth * 4 / 5;
@@ -221,6 +250,15 @@ public class MainActivity extends AppCompatActivity {
             canvas.drawBitmap(display, null,
                     new Rect(graph_l, graph_t, graph_r, graph_b), null);
         }
-        github_graph.setImageBitmap(wallpaper);
+        saveWallpaper();
+    }
+
+    private void saveWallpaper() {
+        try {
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+            wallpaperManager.setBitmap(wallpaper, null, true, WallpaperManager.FLAG_LOCK);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
