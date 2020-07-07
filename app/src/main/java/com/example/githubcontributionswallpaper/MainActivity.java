@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.WallpaperManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -40,9 +41,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
@@ -113,6 +118,20 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putBoolean("enabled", github_wallpaper_switch.isEnabled());
+        savedInstanceState.putString("username", github_username.toString());
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        github_wallpaper_switch.setChecked(savedInstanceState.getBoolean("enabled"));
+        github_username.setText(savedInstanceState.getString("username"));
+    }
+
     private void getGraph() {
         new Thread() {
             @Override
@@ -146,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                             github_status.setText(getResources().getString(R.string.not_found));
                         }
                     });
-                    Log.d("ERROR", e.toString());
+                    Log.e("ERROR", e.toString());
                 }
             }
         }.start();
@@ -218,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                Log.e("ERROR", e.toString());
             }
         } else {
             final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
@@ -258,7 +277,8 @@ public class MainActivity extends AppCompatActivity {
             WallpaperManager wallpaperManager = WallpaperManager.getInstance(getApplicationContext());
             wallpaperManager.setBitmap(wallpaper, null, true, WallpaperManager.FLAG_LOCK);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("ERROR", e.toString());
         }
     }
+
 }
