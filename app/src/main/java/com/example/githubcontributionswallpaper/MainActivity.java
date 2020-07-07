@@ -250,6 +250,8 @@ public class MainActivity extends AppCompatActivity {
             wallpaperDrawable.draw(canvas);
         }
 
+        storeOriginalWallpaper(currentWallpaper);
+
         WindowManager windowManager =
                 (WindowManager) this.getSystemService(this.WINDOW_SERVICE);
         Display defaultDisplay = windowManager.getDefaultDisplay();
@@ -300,16 +302,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Bitmap loadImageFromStorage()
+    private void restoreOriginalWallpaper()
     {
         try {
             File f = new File("original.png");
-            return BitmapFactory.decodeStream(new FileInputStream(f));
+            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+            wallpaperManager.setBitmap(b, null, true, WallpaperManager.FLAG_LOCK);
         }
         catch (Exception e)
         {
             Log.e("ERROR", e.toString());
         }
-        return null;
     }
 }
