@@ -7,6 +7,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -43,6 +44,7 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -281,4 +283,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void storeOriginalWallpaper(Bitmap bitmapImage){
+        File originalWallpaper = new File("original.png");
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(originalWallpaper);
+            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        } catch (Exception e) {
+            Log.e("ERROR", e.toString());
+        } finally {
+            try {
+                fos.close();
+            } catch (Exception e) {
+                Log.e("ERROR", e.toString());
+            }
+        }
+    }
+
+    private Bitmap loadImageFromStorage()
+    {
+        try {
+            File f = new File("original.png");
+            return BitmapFactory.decodeStream(new FileInputStream(f));
+        }
+        catch (Exception e)
+        {
+            Log.e("ERROR", e.toString());
+        }
+        return null;
+    }
 }
