@@ -7,4 +7,5 @@ Overlay your github contributions graph on your Android's lockscreen wallpaper t
   <img src="https://github.com/thisistrivial/thisistrivial/blob/master/res/github-contributions-wallpaper-android/github-cont.png" width="20%">
 </p>
 
-
+## Use
+Download the apk release to your Android device
